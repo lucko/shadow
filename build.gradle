@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+}
+
+group 'me.lucko'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs += ['-Xlint:all', '-Xlint:-path', '-parameters']
+    options.deprecation = true
+    options.encoding = 'UTF-8'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.checkerframework:checker-qual:2.4.0'
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.1.0'
+    testCompile 'org.junit.jupiter:junit-jupiter-engine:5.1.0'
+}
+
+
+task javadocJar(type: Jar) {
+    classifier 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
