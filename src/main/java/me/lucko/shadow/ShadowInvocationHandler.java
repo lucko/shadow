@@ -126,7 +126,7 @@ final class ShadowInvocationHandler implements InvocationHandler {
 
             if (Shadow.class.isAssignableFrom(shadowMethod.getReturnType())) {
                 //noinspection unchecked
-                returnObject = this.shadowFactory.createShadowProxy((Class<? extends Shadow>) shadowMethod.getReturnType(), returnObject);
+                returnObject = this.shadowFactory.shadow((Class<? extends Shadow>) shadowMethod.getReturnType(), returnObject);
             }
 
             return returnObject;
@@ -150,7 +150,7 @@ final class ShadowInvocationHandler implements InvocationHandler {
 
                 if (Shadow.class.isAssignableFrom(shadowMethod.getReturnType())) {
                     //noinspection unchecked
-                    value = this.shadowFactory.createShadowProxy((Class<? extends Shadow>) shadowMethod.getReturnType(), value);
+                    value = this.shadowFactory.shadow((Class<? extends Shadow>) shadowMethod.getReturnType(), value);
                 }
                 return value;
 
@@ -184,7 +184,5 @@ final class ShadowInvocationHandler implements InvocationHandler {
     private @Nullable Object getHandleInScope(@NonNull AnnotatedElement annotatedElement) {
         return annotatedElement.getAnnotation(Static.class) != null ? null : this.handle;
     }
-
-
 
 }

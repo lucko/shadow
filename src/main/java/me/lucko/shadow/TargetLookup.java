@@ -28,61 +28,69 @@ package me.lucko.shadow;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-final class TargetLookup {
+/**
+ * Base implementation of {@link TargetResolver} that delegates to the default + other registered
+ * resolvers.
+ */
+final class TargetLookup implements TargetResolver {
 
-    public static @NonNull Optional<Class<?>> lookupClass(Class<? extends Shadow> shadowClass) throws ClassNotFoundException {
-        TargetClass targetClass = shadowClass.getAnnotation(TargetClass.class);
-        if (targetClass != null) {
-            return Optional.of(targetClass.value());
+    private final @NonNull List<TargetResolver> resolvers = new CopyOnWriteArrayList<>(Arrays.asList(
+            ClassTarget.RESOLVER,
+            Target.RESOLVER,
+            DynamicClassTarget.RESOLVER,
+            DynamicMethodTarget.RESOLVER,
+            DynamicFieldTarget.RESOLVER,
+            FuzzyFieldTargetResolver.INSTANCE
+    ));
+
+    TargetLookup() {
+
+    }
+
+    public void registerResolver(@NonNull TargetResolver targetResolver) {
+        Objects.requireNonNull(targetResolver, "targetResolver");
+        if (!this.resolvers.contains(targetResolver)) {
+            this.resolvers.add(0, targetResolver);
         }
+    }
 
-        Target target = shadowClass.getAnnotation(Target.class);
-        if (target != null) {
-            return Optional.of(Class.forName(target.value()));
+    @Override
+    public @NonNull Optional<Class<?>> lookupClass(@NonNull Class<? extends Shadow> shadowClass) throws ClassNotFoundException {
+        for (TargetResolver resolver : this.resolvers) {
+            Optional<Class<?>> result = resolver.lookupClass(shadowClass);
+            if (result.isPresent()) {
+                return result;
+            }
         }
-
-        DynamicClassTarget dynamicClassTarget = shadowClass.getAnnotation(DynamicClassTarget.class);
-        if (dynamicClassTarget != null) {
-            return Optional.of(Reflection.getInstance(dynamicClassTarget.value()).computeClass(shadowClass));
-        }
-
         return Optional.empty();
     }
 
-    public static @NonNull Optional<String> lookupMethod(@NonNull Method method, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
-        Target target = method.getAnnotation(Target.class);
-        if (target != null) {
-            return Optional.of(target.value());
+    @Override
+    public @NonNull Optional<String> lookupMethod(@NonNull Method shadowMethod, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
+        for (TargetResolver resolver : this.resolvers) {
+            Optional<String> result = resolver.lookupMethod(shadowMethod, shadowClass, targetClass);
+            if (result.isPresent()) {
+                return result;
+            }
         }
-
-        DynamicMethodTarget dynamicTarget = method.getAnnotation(DynamicMethodTarget.class);
-        if (dynamicTarget != null) {
-            Class<? extends DynamicMethodTarget.Function> functionClass = dynamicTarget.value();
-            return Optional.of(Reflection.getInstance(functionClass).computeMethod(method, shadowClass, targetClass));
-        }
-
         return Optional.empty();
     }
 
-    public static @NonNull Optional<String> lookupField(@NonNull Method method, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
-        Target target = method.getAnnotation(Target.class);
-        if (target != null) {
-            return Optional.of(target.value());
+    @Override
+    public @NonNull Optional<String> lookupField(@NonNull Method shadowMethod, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
+        for (TargetResolver resolver : this.resolvers) {
+            Optional<String> result = resolver.lookupField(shadowMethod, shadowClass, targetClass);
+            if (result.isPresent()) {
+                return result;
+            }
         }
-
-        DynamicFieldTarget dynamicTarget = method.getAnnotation(DynamicFieldTarget.class);
-        if (dynamicTarget != null) {
-            Class<? extends DynamicFieldTarget.Function> functionClass = dynamicTarget.value();
-            return Optional.of(Reflection.getInstance(functionClass).computeField(method, shadowClass, targetClass));
-        }
-
         return Optional.empty();
-    }
-
-    private TargetLookup() {
-
     }
 
 }

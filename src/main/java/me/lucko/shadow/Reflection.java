@@ -50,6 +50,9 @@ final class Reflection {
             if (getInstanceMethod.getParameterCount() != 0) {
                 throw new IllegalArgumentException();
             }
+            if (!getInstanceMethod.getReturnType().equals(clazz)) {
+                throw new IllegalArgumentException();
+            }
             ensureAccessible(getInstanceMethod);
             //noinspection unchecked
             return (T) getInstanceMethod.invoke(null);

@@ -33,7 +33,7 @@ public class BasicTest {
     @Test
     public void testShadow() {
         DataClass data = new DataClass("foo", 5, false);
-        DataClassShadow shadow = ShadowFactory.shadow(DataClassShadow.class, data);
+        DataClassShadow shadow = ShadowFactory.global().shadow(DataClassShadow.class, data);
 
         Assertions.assertEquals("foo", shadow.getTheString());
         Assertions.assertEquals(5, shadow.getTheInteger());
@@ -46,7 +46,7 @@ public class BasicTest {
 
     @Test
     public void testConstruction() {
-        DataClassShadow shadow = ShadowFactory.constructShadow(DataClassShadow.class, "baz", 42, true);
+        DataClassShadow shadow = ShadowFactory.global().constructShadow(DataClassShadow.class, "baz", 42, true);
         Assertions.assertEquals("baz", shadow.getTheString());
 
         Object target = shadow.getShadowTarget();
@@ -58,7 +58,7 @@ public class BasicTest {
         Assertions.assertEquals(42, casted.theInteger);
     }
 
-    @TargetClass(DataClass.class)
+    @ClassTarget(DataClass.class)
     private interface DataClassShadow extends Shadow {
         @ShadowField
         String getTheString();

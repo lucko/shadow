@@ -36,7 +36,7 @@ public class DynamicTest {
     @Test
     public void testDynamicShadow() {
         DataClass data = new DataClass("foo");
-        DataClassShadow shadow = ShadowFactory.shadow(DataClassShadow.class, data);
+        DataClassShadow shadow = ShadowFactory.global().shadow(DataClassShadow.class, data);
 
         Assertions.assertEquals("foo", shadow.getString());
     }

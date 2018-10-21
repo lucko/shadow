@@ -31,7 +31,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 
-class FieldMethodHandle {
+final class FieldMethodHandle {
     private final @NonNull MethodHandle getter;
     private final @NonNull MethodHandle setter;
 
