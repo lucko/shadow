@@ -30,7 +30,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -43,14 +42,14 @@ final class Reflection {
         }
     }
 
-    public static <T> @NonNull T getInstance(@NonNull Class<T> clazz) {
+    public static <T> @NonNull T getInstance(@NonNull Class<T> returnType, @NonNull Class<? extends T> implementationType) {
         try {
-            Method getInstanceMethod = clazz.getDeclaredMethod("getInstance");
+            Method getInstanceMethod = implementationType.getDeclaredMethod("getInstance");
             ensureStatic(getInstanceMethod);
             if (getInstanceMethod.getParameterCount() != 0) {
                 throw new IllegalArgumentException();
             }
-            if (!getInstanceMethod.getReturnType().equals(clazz)) {
+            if (!returnType.isAssignableFrom(getInstanceMethod.getReturnType())) {
                 throw new IllegalArgumentException();
             }
             ensureAccessible(getInstanceMethod);
@@ -60,42 +59,48 @@ final class Reflection {
             // ignore
         }
 
-        Field instanceField = null;
+        if (implementationType.isEnum()) {
+            T[] enumConstants = implementationType.getEnumConstants();
+            if (enumConstants.length == 1) {
+                return enumConstants[0];
+            }
+        }
+
         try {
-            instanceField = clazz.getDeclaredField("instance");
+            Field instanceField = implementationType.getDeclaredField("instance");
             ensureStatic(instanceField);
-            if (!instanceField.getType().equals(clazz)) {
+            if (!returnType.isAssignableFrom(instanceField.getType())) {
                 throw new IllegalArgumentException();
             }
+            ensureAccessible(instanceField);
+            //noinspection unchecked
+            return (T) instanceField.get(null);
         } catch (Exception e) {
-            try {
-                instanceField = clazz.getDeclaredField("INSTANCE");
-                ensureStatic(instanceField);
-                if (!instanceField.getType().equals(clazz)) {
-                    throw new IllegalArgumentException();
-                }
-            } catch (Exception e2) {
-                // ignore
-            }
-        }
-
-        if (instanceField != null) {
-            try {
-                ensureAccessible(instanceField);
-                //noinspection unchecked
-                return (T) instanceField.get(null);
-            } catch (Exception e) {
-                // ignore
-            }
+            // ignore
         }
 
         try {
-            Constructor<T> constructor = clazz.getDeclaredConstructor();
+            Field instanceField = implementationType.getDeclaredField("INSTANCE");
+            ensureStatic(instanceField);
+            if (!returnType.isAssignableFrom(instanceField.getType())) {
+                throw new IllegalArgumentException();
+            }
+            ensureAccessible(instanceField);
+            //noinspection unchecked
+            return (T) instanceField.get(null);
+        } catch (Exception e) {
+            // ignore
+        }
+
+        try {
+            Constructor<? extends T> constructor = implementationType.getDeclaredConstructor();
             ensureAccessible(constructor);
             return constructor.newInstance();
-        } catch (NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException e) {
-            throw new RuntimeException("Unable to obtain an instance of " + clazz.getName(), e);
+        } catch (Exception e) {
+            // ignore
         }
+
+        throw new RuntimeException("Unable to obtain an instance of " + implementationType.getName());
     }
 
     public static void ensureAccessible(AccessibleObject accessibleObject) {

@@ -48,6 +48,7 @@ public @interface DynamicClassTarget {
      * <p></p>
      * <ul>
      * <li>a static method named {@code getInstance} accepting no parameters and returning an instance of the implementation.</li>
+     * <li>via a single enum constant, if the loading function class is an enum following the enum singleton pattern.</li>
      * <li>a static field named {@code instance} with the same type as and containing an instance of the implementation.</li>
      * <li>a static field named {@code INSTANCE} with the same type as and containing an instance of the implementation.</li>
      * <li>a no-args constructor</li>
@@ -81,12 +82,12 @@ public @interface DynamicClassTarget {
     TargetResolver RESOLVER = new TargetResolver() {
         @Override
         public @NonNull Optional<Class<?>> lookupClass(@NonNull Class<? extends Shadow> shadowClass) throws ClassNotFoundException {
-            DynamicClassTarget dynamicClassTarget = shadowClass.getAnnotation(DynamicClassTarget.class);
-            if (dynamicClassTarget == null) {
+            DynamicClassTarget annotation = shadowClass.getAnnotation(DynamicClassTarget.class);
+            if (annotation == null) {
                 return Optional.empty();
             }
 
-            return Optional.of(Reflection.getInstance(dynamicClassTarget.value()).computeClass(shadowClass));
+            return Optional.of(Reflection.getInstance(DynamicClassTarget.Function.class, annotation.value()).computeClass(shadowClass));
         }
     };
 

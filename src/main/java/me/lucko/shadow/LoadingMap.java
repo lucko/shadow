@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-public interface LoadingMap<K, V> extends Map<K, V> {
+interface LoadingMap<K, V> extends Map<K, V> {
     static <K, V> LoadingMap<K, V> of(final Map<K, V> map, final Function<K, V> function) {
         return new LoadingMapImpl<>(map, function);
     }

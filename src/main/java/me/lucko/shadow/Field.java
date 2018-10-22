@@ -25,28 +25,16 @@
 
 package me.lucko.shadow;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
+/**
+ * Marks that a method on a {@link Shadow} should map to a field on the target class.
+ */
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Field {
 
-final class FieldMethodHandle {
-    private final @NonNull MethodHandle getter;
-    private final @NonNull MethodHandle setter;
-
-    FieldMethodHandle(@NonNull Field field) throws IllegalAccessException {
-        Class<?> declaringClass = field.getDeclaringClass();
-        MethodHandles.Lookup lookup = PrivateMethodHandles.forClass(declaringClass);
-        this.getter = lookup.unreflectGetter(field);
-        this.setter = lookup.unreflectSetter(field);
-    }
-
-    public @NonNull MethodHandle getter() {
-        return this.getter;
-    }
-
-    public @NonNull MethodHandle setter() {
-        return this.setter;
-    }
 }

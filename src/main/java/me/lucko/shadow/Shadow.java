@@ -32,9 +32,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * Marks a "shadow" interface.
  *
  * <p>{@link Shadow}s are implemented at runtime by the {@link ShadowFactory}.</p>
- *
- * <p>All non-default methods should be marked with a {@link ShadowMethod} or {@link ShadowField}
- * annotation.</p>
  */
 public interface Shadow {
 

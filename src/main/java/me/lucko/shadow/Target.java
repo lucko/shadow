@@ -53,12 +53,12 @@ public @interface Target {
     TargetResolver RESOLVER = new TargetResolver() {
         @Override
         public @NonNull Optional<Class<?>> lookupClass(@NonNull Class<? extends Shadow> shadowClass) throws ClassNotFoundException {
-            Target target = shadowClass.getAnnotation(Target.class);
-            if (target == null) {
+            Target annotation = shadowClass.getAnnotation(Target.class);
+            if (annotation == null) {
                 return Optional.empty();
             }
 
-            return Optional.of(Class.forName(target.value()));
+            return Optional.of(Class.forName(annotation.value()));
         }
 
         @Override

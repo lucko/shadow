@@ -49,6 +49,7 @@ public @interface DynamicMethodTarget {
      * <p></p>
      * <ul>
      * <li>a static method named {@code getInstance} accepting no parameters and returning an instance of the implementation.</li>
+     * <li>via a single enum constant, if the loading function class is an enum following the enum singleton pattern.</li>
      * <li>a static field named {@code instance} with the same type as and containing an instance of the implementation.</li>
      * <li>a static field named {@code INSTANCE} with the same type as and containing an instance of the implementation.</li>
      * <li>a no-args constructor</li>
@@ -83,12 +84,12 @@ public @interface DynamicMethodTarget {
     TargetResolver RESOLVER = new TargetResolver() {
         @Override
         public @NonNull Optional<String> lookupMethod(@NonNull Method shadowMethod, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
-            DynamicMethodTarget dynamicTarget = shadowMethod.getAnnotation(DynamicMethodTarget.class);
-            if (dynamicTarget == null) {
+            DynamicMethodTarget annotation = shadowMethod.getAnnotation(DynamicMethodTarget.class);
+            if (annotation == null) {
                 return Optional.empty();
             }
 
-            return Optional.of(Reflection.getInstance(dynamicTarget.value()).computeMethod(shadowMethod, shadowClass, targetClass));
+            return Optional.of(Reflection.getInstance(DynamicMethodTarget.Function.class, annotation.value()).computeMethod(shadowMethod, shadowClass, targetClass));
         }
     };
 

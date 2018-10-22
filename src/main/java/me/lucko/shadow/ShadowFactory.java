@@ -37,7 +37,7 @@ import java.util.Objects;
 /**
  * Creates instances of {@link Shadow} interfaces.
  */
-public final class ShadowFactory {
+public class ShadowFactory {
 
     private static final ShadowFactory INSTANCE = new ShadowFactory();
 
@@ -68,7 +68,7 @@ public final class ShadowFactory {
      * @param <T> the shadow type
      * @return the shadow instance
      */
-    public <T extends Shadow> @NonNull T shadow(@NonNull Class<T> shadowClass, @NonNull Object handle) {
+    public final <T extends Shadow> @NonNull T shadow(@NonNull Class<T> shadowClass, @NonNull Object handle) {
         Objects.requireNonNull(shadowClass, "shadowClass");
         Objects.requireNonNull(handle, "handle");
 
@@ -92,7 +92,7 @@ public final class ShadowFactory {
      * @param <T> the shadow type
      * @return the shadow instance
      */
-    public <T extends Shadow> @NonNull T staticShadow(@NonNull Class<T> shadowClass) {
+    public final <T extends Shadow> @NonNull T staticShadow(@NonNull Class<T> shadowClass) {
         Objects.requireNonNull(shadowClass, "shadowClass");
 
         // register the shadow first
@@ -111,7 +111,7 @@ public final class ShadowFactory {
      * @param <T> the shadow type
      * @return the shadow instance
      */
-    public <T extends Shadow> @NonNull T constructShadow(@NonNull Class<T> shadowClass, @NonNull Object... args) {
+    public final <T extends Shadow> @NonNull T constructShadow(@NonNull Class<T> shadowClass, @NonNull Object... args) {
         Objects.requireNonNull(shadowClass, "shadowClass");
 
         // register the shadow first
@@ -138,7 +138,7 @@ public final class ShadowFactory {
      *
      * @param targetResolver the resolver
      */
-    public void registerTargetResolver(@NonNull TargetResolver targetResolver) {
+    public final void registerTargetResolver(@NonNull TargetResolver targetResolver) {
         this.targetLookup.registerResolver(targetResolver);
     }
 

@@ -39,11 +39,20 @@ public class DynamicTest {
         DataClassShadow shadow = ShadowFactory.global().shadow(DataClassShadow.class, data);
 
         Assertions.assertEquals("foo", shadow.getString());
+        Assertions.assertEquals("foo", shadow.getString2());
     }
 
     private static final class ClassTargetFunction implements DynamicClassTarget.Function {
-        public ClassTargetFunction() {
+        private static final DynamicClassTarget.Function i = new ClassTargetFunction();
 
+        public static DynamicClassTarget.Function getInstance() {
+            return i;
+        }
+
+        private ClassTargetFunction() {
+            if (i != null) {
+                throw new AssertionError();
+            }
         }
 
         @Override
@@ -52,7 +61,14 @@ public class DynamicTest {
         }
     }
 
+
     private static final class FieldTargetFunction implements DynamicFieldTarget.Function {
+        public static final DynamicFieldTarget.Function INSTANCE = new FieldTargetFunction();
+        private FieldTargetFunction() {
+            if (INSTANCE != null) {
+                throw new AssertionError();
+            }
+        }
 
         @Override
         public @NonNull String computeField(@NonNull Method shadowMethod, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
@@ -60,11 +76,24 @@ public class DynamicTest {
         }
     }
 
+    private enum FieldTargetFunction2 implements DynamicFieldTarget.Function {
+        THE_INSTANCE;
+
+        @Override
+        public @NonNull String computeField(@NonNull Method shadowMethod, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
+            return "stringValue";
+        }
+    }
+
     @DynamicClassTarget(ClassTargetFunction.class)
     private interface DataClassShadow extends Shadow {
-        @ShadowField
+        @Field
         @DynamicFieldTarget(FieldTargetFunction.class)
         String getString();
+
+        @Field
+        @DynamicFieldTarget(FieldTargetFunction2.class)
+        String getString2();
     }
 
     private static final class DataClass {

@@ -104,85 +104,55 @@ final class ShadowInvocationHandler implements InvocationHandler {
                     .invokeWithArguments(args);
         }
 
-        ShadowMethod methodAnnotation = shadowMethod.getAnnotation(ShadowMethod.class);
-        // also proxy the methods from Object, e.g. equals, hashCode and toString
-        if (methodAnnotation != null || shadowMethod.getDeclaringClass() == Object.class) {
-            Object[] unwrappedArguments = this.shadowFactory.unwrapShadows(args);
-            Class[] unwrappedArgumentTypes = Arrays.stream(unwrappedArguments).map(Object::getClass).toArray(Class[]::new);
+        Object returnValue;
 
-            MethodHandle targetMethod = this.shadow.findTargetMethod(shadowMethod, unwrappedArgumentTypes);
-
-            Object returnObject;
-            Object scopedHandle = getHandleInScope(shadowMethod);
-            if (scopedHandle == null) {
-                returnObject = targetMethod.invokeWithArguments(unwrappedArguments);
-            } else {
-                returnObject = targetMethod.bindTo(scopedHandle).invokeWithArguments(unwrappedArguments);
-            }
-
-            if (returnObject == null) {
-                return null;
-            }
-
-            if (Shadow.class.isAssignableFrom(shadowMethod.getReturnType())) {
-                //noinspection unchecked
-                returnObject = this.shadowFactory.shadow((Class<? extends Shadow>) shadowMethod.getReturnType(), returnObject);
-            }
-
-            return returnObject;
-        }
-
-        ShadowField fieldAnnotation = shadowMethod.getAnnotation(ShadowField.class);
-        if (fieldAnnotation != null) {
-            FieldMethodHandle targetField = this.shadow.findTargetField(shadowMethod);
+        if (shadowMethod.isAnnotationPresent(Field.class)) {
+            ShadowDefinition.TargetField targetField = this.shadow.findTargetField(shadowMethod);
 
             if (args == null || args.length == 0) {
                 // getter
-                MethodHandle getter = targetField.getter();
-
-                Object value;
-                Object scopedHandle = getHandleInScope(shadowMethod);
-                if (scopedHandle == null) {
-                    value = getter.invoke();
-                } else {
-                    value = getter.bindTo(scopedHandle).invoke();
-                }
-
-                if (Shadow.class.isAssignableFrom(shadowMethod.getReturnType())) {
-                    //noinspection unchecked
-                    value = this.shadowFactory.shadow((Class<? extends Shadow>) shadowMethod.getReturnType(), value);
-                }
-                return value;
+                returnValue = bindWithHandle(targetField.getterHandle(), shadowMethod).invoke();
 
             } else if (args.length == 1) {
                 // setter
-                MethodHandle setter = targetField.setter();
-
+                MethodHandle setter = bindWithHandle(targetField.setterHandle(), shadowMethod);
                 Object value = this.shadowFactory.unwrapShadow(args[0]);
-                Object scopedHandle = getHandleInScope(shadowMethod);
-                if (scopedHandle == null) {
-                    setter.invokeWithArguments(value);
-                } else {
-                    setter.bindTo(scopedHandle).invokeWithArguments(value);
-                }
+                setter.invokeWithArguments(value);
 
                 if (shadowMethod.getReturnType() == void.class) {
-                    return null;
+                    returnValue = null;
                 } else {
                     // allow chaining
-                    return this.handle;
+                    returnValue = this.handle;
                 }
-
             } else {
                 throw new IllegalStateException("Unable to determine accessor type (getter/setter) for " + this.shadow.getTargetClass().getName() + "#" + shadowMethod.getName());
             }
+        } else {
+            // assume method target
+            Object[] unwrappedArguments = this.shadowFactory.unwrapShadows(args);
+            Class[] unwrappedArgumentTypes = Arrays.stream(unwrappedArguments).map(Object::getClass).toArray(Class[]::new);
+
+            ShadowDefinition.TargetMethod targetMethod = this.shadow.findTargetMethod(shadowMethod, unwrappedArgumentTypes);
+            returnValue = bindWithHandle(targetMethod.handle(), shadowMethod).invokeWithArguments(unwrappedArguments);
         }
 
-        throw new RuntimeException("Shadow method " + shadowMethod + " is not marked with @ShadowMethod or @ShadowField");
+        if (returnValue != null && Shadow.class.isAssignableFrom(shadowMethod.getReturnType())) {
+            //noinspection unchecked
+            returnValue = this.shadowFactory.shadow((Class<? extends Shadow>) shadowMethod.getReturnType(), returnValue);
+        }
+        return returnValue;
     }
 
-    private @Nullable Object getHandleInScope(@NonNull AnnotatedElement annotatedElement) {
-        return annotatedElement.getAnnotation(Static.class) != null ? null : this.handle;
+    private @NonNull MethodHandle bindWithHandle(MethodHandle methodHandle, @NonNull AnnotatedElement annotatedElement) {
+        if (annotatedElement.isAnnotationPresent(Static.class)) {
+            return methodHandle;
+        } else {
+            if (this.handle == null) {
+                throw new IllegalStateException("Cannot call non-static method from a static shadow instance.");
+            }
+            return methodHandle.bindTo(this.handle);
+        }
     }
 
 }
