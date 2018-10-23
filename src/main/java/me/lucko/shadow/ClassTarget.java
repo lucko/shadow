@@ -36,7 +36,7 @@ import java.util.Optional;
 /**
  * Defines a class target with a constant, known value.
  */
-@Target({ElementType.TYPE})
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ClassTarget {
 
