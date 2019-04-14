@@ -145,7 +145,7 @@ public class ShadowFactory {
     private @NonNull ShadowDefinition initShadow(@NonNull Class<? extends Shadow> shadowClass) {
         try {
             return new ShadowDefinition(this, shadowClass, this.targetLookup.lookupClass(shadowClass)
-                    .orElseThrow(() -> new IllegalStateException("Shadow class " + shadowClass.getName() + " does not have a defined target."))
+                    .orElseThrow(() -> new IllegalStateException("Shadow class " + shadowClass.getName() + " does not have a defined target class."))
             );
         } catch (ClassNotFoundException e) {
             throw new RuntimeException("Class not found for shadow " + shadowClass.getName(), e);
@@ -171,7 +171,6 @@ public class ShadowFactory {
 
         if (object instanceof Shadow) {
             Shadow shadow = (Shadow) object;
-            this.shadows.get(shadow.getClass()); // ensure loaded
             return unwrapShadow(shadow.getShadowTarget());
         }
 
