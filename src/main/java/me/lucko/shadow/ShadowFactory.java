@@ -76,7 +76,7 @@ public class ShadowFactory {
         ShadowDefinition shadowDefinition = this.shadows.get(shadowClass);
 
         // ensure the target class of the shadow is assignable from the handle class
-        Class<?> targetClass = this.shadows.get(shadowClass).getTargetClass();
+        Class<?> targetClass = shadowDefinition.getTargetClass();
         if (!targetClass.isAssignableFrom(handle.getClass())) {
             throw new IllegalArgumentException("Target class " + targetClass.getName() + " is not assignable from handle class " + handle.getClass().getName());
         }
