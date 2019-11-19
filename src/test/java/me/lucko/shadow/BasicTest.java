@@ -70,11 +70,16 @@ public class BasicTest {
 
         // ensure underlying properties are correct
         Assertions.assertNotEquals(data1, data2);
+        Assertions.assertNotEquals(data1.hashCode(), data2.hashCode());
 
         // test shadow equals/hashcode
         Assertions.assertEquals(shadow1, shadow1_2);
         Assertions.assertNotEquals(shadow1, shadow2);
         Assertions.assertEquals(shadow1.hashCode(), shadow1_2.hashCode());
+        Assertions.assertNotEquals(shadow1.hashCode(), shadow2.hashCode());
+
+        // test different instances, even though equal
+        Assertions.assertNotSame(shadow1, shadow1_2);
     }
 
     @Test
