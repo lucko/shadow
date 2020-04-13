@@ -25,8 +25,9 @@
 
 package me.lucko.shadow;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BasicTest {
 
@@ -35,29 +36,29 @@ public class BasicTest {
         DataClass data = new DataClass("foo", 5, false);
         DataClassShadow shadow = ShadowFactory.global().shadow(DataClassShadow.class, data);
 
-        Assertions.assertEquals("foo", shadow.getTheString());
-        Assertions.assertEquals(5, shadow.getTheInteger());
-        Assertions.assertFalse(shadow.isTheBoolean());
+        assertEquals("foo", shadow.getTheString());
+        assertEquals(5, shadow.getTheInteger());
+        assertFalse(shadow.isTheBoolean());
 
         shadow.setTheString("bar");
-        Assertions.assertEquals("bar", shadow.getTheString());
-        Assertions.assertEquals("bar", data.theString);
+        assertEquals("bar", shadow.getTheString());
+        assertEquals("bar", data.theString);
         shadow.incrementTheInteger();
-        Assertions.assertEquals(6, shadow.getTheInteger());
+        assertEquals(6, shadow.getTheInteger());
     }
 
     @Test
     public void testConstruction() {
         DataClassShadow shadow = ShadowFactory.global().constructShadow(DataClassShadow.class, "baz", 42, true);
-        Assertions.assertEquals("baz", shadow.getTheString());
+        assertEquals("baz", shadow.getTheString());
 
         Object target = shadow.getShadowTarget();
-        Assertions.assertNotNull(target);
-        Assertions.assertTrue(target instanceof DataClass);
+        assertNotNull(target);
+        assertTrue(target instanceof DataClass);
 
         DataClass casted = (DataClass) target;
-        Assertions.assertTrue(casted.theBoolean);
-        Assertions.assertEquals(42, casted.i);
+        assertTrue(casted.theBoolean);
+        assertEquals(42, casted.i);
     }
 
     @Test
@@ -69,17 +70,17 @@ public class BasicTest {
         DataClassShadow shadow2 = ShadowFactory.global().shadow(DataClassShadow.class, data2);
 
         // ensure underlying properties are correct
-        Assertions.assertNotEquals(data1, data2);
-        Assertions.assertNotEquals(data1.hashCode(), data2.hashCode());
+        assertNotEquals(data1, data2);
+        assertNotEquals(data1.hashCode(), data2.hashCode());
 
         // test shadow equals/hashcode
-        Assertions.assertEquals(shadow1, shadow1_2);
-        Assertions.assertNotEquals(shadow1, shadow2);
-        Assertions.assertEquals(shadow1.hashCode(), shadow1_2.hashCode());
-        Assertions.assertNotEquals(shadow1.hashCode(), shadow2.hashCode());
+        assertEquals(shadow1, shadow1_2);
+        assertNotEquals(shadow1, shadow2);
+        assertEquals(shadow1.hashCode(), shadow1_2.hashCode());
+        assertNotEquals(shadow1.hashCode(), shadow2.hashCode());
 
         // test different instances, even though equal
-        Assertions.assertNotSame(shadow1, shadow1_2);
+        assertNotSame(shadow1, shadow1_2);
     }
 
     @Test
@@ -87,10 +88,10 @@ public class BasicTest {
         DataClass data = new DataClass("foo", 5, false);
         DataClassShadow shadow = ShadowFactory.global().shadow(DataClassShadow.class, data);
 
-        Assertions.assertEquals(DataClassShadow.class, shadow.getShadowClass());
-        Assertions.assertEquals(data, shadow.getShadowTarget());
-        Assertions.assertNotNull(shadow.getShadowTarget());
-        Assertions.assertEquals(DataClass.class, shadow.getShadowTarget().getClass());
+        assertEquals(DataClassShadow.class, shadow.getShadowClass());
+        assertEquals(data, shadow.getShadowTarget());
+        assertNotNull(shadow.getShadowTarget());
+        assertEquals(DataClass.class, shadow.getShadowTarget().getClass());
     }
 
     @ClassTarget(DataClass.class)

@@ -29,47 +29,45 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class StaticTest {
+public class ReturnShadowingTest {
 
     @Test
-    public void testStatic() {
-        TestClassShadow shadow = ShadowFactory.global().shadow(TestClassShadow.class, new TestClass("foo"));
-        TestClassShadow staticShadow = ShadowFactory.global().staticShadow(TestClassShadow.class);
+    public void testArrayReturnShadowing() {
+        DataClass data = new DataClass(new Item[]{new Item(2), new Item(5)});
+        DataClassShadow shadow = ShadowFactory.global().shadow(DataClassShadow.class, data);
 
-        shadow.isString("bar");
-        staticShadow.isString("bar");
-
-        assertThrows(IllegalStateException.class, staticShadow::getString, "Cannot call non-static method from a static shadow instance.");
+        assertEquals(2, shadow.getItems()[0].getValue());
+        assertEquals(5, shadow.getItems()[1].getValue());
     }
 
-    @Test
-    public void testDefault() {
-        TestClassShadow shadow = ShadowFactory.global().shadow(TestClassShadow.class, new TestClass("foo"));
-        assertEquals("foobar", shadow.getStringWith("bar"));
-    }
-
-    @ClassTarget(TestClass.class)
-    private interface TestClassShadow extends Shadow {
+    @ClassTarget(DataClass.class)
+    private interface DataClassShadow extends Shadow {
         @Field
-        String getString();
+        @ReturnShadowingStrategy(ReturnShadowingStrategy.ShadowReturnArray.class)
+        ItemShadow[] getItems();
+    }
 
-        @Static
-        boolean isString(Object o);
+    @ClassTarget(Item.class)
+    private interface ItemShadow extends Shadow {
+        @Field
+        @Target("i")
+        int getValue();
+    }
 
-        default String getStringWith(String other) {
-            return getString() + other;
+    private static final class DataClass {
+        private final Item[] items;
+
+        private DataClass(Item[] items) {
+            this.items = items;
         }
     }
 
-    private static final class TestClass {
-        private final String string;
+    private static final class Item {
+        private final int i;
 
-        private TestClass(String string) {
-            this.string = string;
-        }
-
-        public static boolean isString(Object obj) {
-            return obj instanceof String;
+        private Item(int i) {
+            this.i = i;
         }
     }
+
 }

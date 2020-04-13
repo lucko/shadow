@@ -137,11 +137,15 @@ final class ShadowInvocationHandler implements InvocationHandler {
             returnValue = bindWithHandle(targetMethod.handle(), shadowMethod).invokeWithArguments(unwrappedArguments);
         }
 
-        if (returnValue != null && Shadow.class.isAssignableFrom(shadowMethod.getReturnType())) {
-            //noinspection unchecked
-            returnValue = this.shadowFactory.shadow((Class<? extends Shadow>) shadowMethod.getReturnType(), returnValue);
+        ReturnShadowingStrategy returnShadowingStrategy = shadowMethod.getAnnotation(ReturnShadowingStrategy.class);
+        ReturnShadowingStrategy.Function returnShadowingFunction;
+        if (returnShadowingStrategy == null) {
+            returnShadowingFunction = ReturnShadowingStrategy.ShadowReturn.INSTANCE;
+        } else {
+            returnShadowingFunction = Reflection.getInstance(ReturnShadowingStrategy.Function.class, returnShadowingStrategy.value());
         }
-        return returnValue;
+
+        return returnShadowingFunction.compute(returnValue, shadowMethod, shadowFactory);
     }
 
     private @NonNull MethodHandle bindWithHandle(MethodHandle methodHandle, @NonNull AnnotatedElement annotatedElement) {

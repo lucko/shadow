@@ -26,10 +26,11 @@
 package me.lucko.shadow;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Method;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DynamicTest {
 
@@ -38,8 +39,8 @@ public class DynamicTest {
         DataClass data = new DataClass("foo");
         DataClassShadow shadow = ShadowFactory.global().shadow(DataClassShadow.class, data);
 
-        Assertions.assertEquals("foo", shadow.getString());
-        Assertions.assertEquals("foo", shadow.getString2());
+        assertEquals("foo", shadow.getString());
+        assertEquals("foo", shadow.getString2());
     }
 
     private static final class ClassTargetFunction implements DynamicClassTarget.Function {
