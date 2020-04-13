@@ -25,6 +25,8 @@
 
 package me.lucko.shadow;
 
+import me.lucko.shadow.ShadowingStrategy.Unwrapper;
+import me.lucko.shadow.ShadowingStrategy.Wrapper;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -78,7 +80,7 @@ final class ShadowInvocationHandler implements InvocationHandler {
 
         // implement some object methods
         if (OBJECT_TOSTRING_METHOD.equals(shadowMethod)) {
-            return "Shadow(shadowClass=" + this.shadow.getShadowClass() + ", targetClass=" + this.shadow.getTargetClass() + ", target=" + Objects.toString(this.handle) + ")";
+            return "Shadow(shadowClass=" + this.shadow.getShadowClass() + ", targetClass=" + this.shadow.getTargetClass() + ", target=" + this.handle + ")";
         }
         if (OBJECT_EQUALS_METHOD.equals(shadowMethod)) {
             Object otherObject = args[0];
@@ -116,7 +118,9 @@ final class ShadowInvocationHandler implements InvocationHandler {
             } else if (args.length == 1) {
                 // setter
                 MethodHandle setter = bindWithHandle(targetField.setterHandle(), shadowMethod);
-                Object value = this.shadowFactory.unwrapShadow(args[0]);
+                Unwrapper unwrapper = getUnwrapper(shadowMethod);
+                Class<?> unwrappedType = unwrapper.unwrap(shadowMethod.getParameterTypes()[0], shadowFactory);
+                Object value = unwrapper.unwrap(args[0], unwrappedType, this.shadowFactory);
                 setter.invokeWithArguments(value);
 
                 if (shadowMethod.getReturnType() == void.class) {
@@ -130,22 +134,39 @@ final class ShadowInvocationHandler implements InvocationHandler {
             }
         } else {
             // assume method target
-            Object[] unwrappedArguments = this.shadowFactory.unwrapShadows(args);
-            Class[] unwrappedArgumentTypes = Arrays.stream(unwrappedArguments).map(Object::getClass).toArray(Class[]::new);
+            Unwrapper unwrapper = getUnwrapper(shadowMethod);
+            Class<?>[] unwrappedParameterTypes = unwrapper.unwrapAll(shadowMethod.getParameterTypes(), this.shadowFactory);
+            Object[] unwrappedArguments = unwrapper.unwrapAll(args, unwrappedParameterTypes, this.shadowFactory);
+            Class<?>[] unwrappedArgumentTypes = Arrays.stream(unwrappedArguments).map(Object::getClass).toArray(Class[]::new);
 
             ShadowDefinition.TargetMethod targetMethod = this.shadow.findTargetMethod(shadowMethod, unwrappedArgumentTypes);
             returnValue = bindWithHandle(targetMethod.handle(), shadowMethod).invokeWithArguments(unwrappedArguments);
         }
 
-        ReturnShadowingStrategy returnShadowingStrategy = shadowMethod.getAnnotation(ReturnShadowingStrategy.class);
-        ReturnShadowingStrategy.Function returnShadowingFunction;
-        if (returnShadowingStrategy == null) {
-            returnShadowingFunction = ReturnShadowingStrategy.ShadowReturn.INSTANCE;
-        } else {
-            returnShadowingFunction = Reflection.getInstance(ReturnShadowingStrategy.Function.class, returnShadowingStrategy.value());
-        }
+        Wrapper wrapper = getWrapper(shadowMethod);
+        return wrapper.wrap(returnValue, shadowMethod.getReturnType(), this.shadowFactory);
+    }
 
-        return returnShadowingFunction.compute(returnValue, shadowMethod, shadowFactory);
+    private static Wrapper getWrapper(Method shadowMethod) {
+        ShadowingStrategy shadowingStrategy = shadowMethod.getAnnotation(ShadowingStrategy.class);
+        Wrapper wrapper;
+        if (shadowingStrategy == null || shadowingStrategy.wrapper() == Wrapper.class) {
+            wrapper = ShadowingStrategy.ForShadows.INSTANCE;
+        } else {
+            wrapper = Reflection.getInstance(Wrapper.class, shadowingStrategy.wrapper());
+        }
+        return wrapper;
+    }
+
+    private static Unwrapper getUnwrapper(Method shadowMethod) {
+        ShadowingStrategy shadowingStrategy = shadowMethod.getAnnotation(ShadowingStrategy.class);
+        Unwrapper unwrapper;
+        if (shadowingStrategy == null || shadowingStrategy.unwrapper() == Unwrapper.class) {
+            unwrapper = ShadowingStrategy.ForShadows.INSTANCE;
+        } else {
+            unwrapper = Reflection.getInstance(Unwrapper.class, shadowingStrategy.unwrapper());
+        }
+        return unwrapper;
     }
 
     private @NonNull MethodHandle bindWithHandle(MethodHandle methodHandle, @NonNull AnnotatedElement annotatedElement) {

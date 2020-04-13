@@ -26,7 +26,6 @@
 package me.lucko.shadow;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.InvocationHandler;
@@ -112,13 +111,35 @@ public class ShadowFactory {
      * @return the shadow instance
      */
     public final <T extends Shadow> @NonNull T constructShadow(@NonNull Class<T> shadowClass, @NonNull Object... args) {
+        return constructShadow(shadowClass, ShadowingStrategy.ForShadows.INSTANCE, args);
+    }
+
+    /**
+     * Creates a shadow for the given object, by invoking a constructor on the shadows
+     * target.
+     *
+     * @param shadowClass the class of the shadow definition
+     * @param unwrapper the unwrapper to use
+     * @param args the arguments to pass to the constructor
+     * @param <T> the shadow type
+     * @return the shadow instance
+     */
+    public final <T extends Shadow> @NonNull T constructShadow(@NonNull Class<T> shadowClass, ShadowingStrategy.@NonNull Unwrapper unwrapper, @NonNull Object... args) {
         Objects.requireNonNull(shadowClass, "shadowClass");
 
         // register the shadow first
         ShadowDefinition shadowDefinition = this.shadows.get(shadowClass);
 
-        Object[] unwrappedArguments = unwrapShadows(args);
-        Class[] unwrappedArgumentTypes = Arrays.stream(unwrappedArguments).map(Object::getClass).toArray(Class[]::new);
+        final Class<?>[] argumentTypes = Arrays.stream(args).map(Object::getClass).toArray(Class[]::new);
+        Class<?>[] unwrappedParameterTypes;
+        Object[] unwrappedArguments;
+        try {
+            unwrappedParameterTypes = unwrapper.unwrapAll(argumentTypes, this);
+            unwrappedArguments = unwrapper.unwrapAll(args, unwrappedParameterTypes, this);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        Class<?>[] unwrappedArgumentTypes = Arrays.stream(unwrappedArguments).map(Object::getClass).toArray(Class[]::new);
 
         MethodHandle targetConstructor = shadowDefinition.findTargetConstructor(unwrappedArgumentTypes);
 
@@ -156,25 +177,9 @@ public class ShadowFactory {
         return this.targetLookup;
     }
 
-    @NonNull Object[] unwrapShadows(@Nullable Object[] objects) {
-        if (objects == null) {
-            return new Object[0];
-        }
-
-        return Arrays.stream(objects).map(this::unwrapShadow).toArray(Object[]::new);
-    }
-
-    @Nullable Object unwrapShadow(@Nullable Object object) {
-        if (object == null) {
-            return null;
-        }
-
-        if (object instanceof Shadow) {
-            Shadow shadow = (Shadow) object;
-            return unwrapShadow(shadow.getShadowTarget());
-        }
-
-        return object;
+    @NonNull Class<?> getTargetClass(@NonNull Class<?> shadowClass) {
+        final ShadowDefinition definition = this.shadows.getIfPresent(shadowClass);
+        return definition == null ? shadowClass : definition.getTargetClass();
     }
 
     private static <T> @NonNull T createProxy(@NonNull Class<T> interfaceType, @NonNull InvocationHandler handler) {

@@ -38,6 +38,8 @@ interface LoadingMap<K, V> extends Map<K, V> {
     static <K, V> LoadingMap<K, V> of(final Function<K, V> function) {
         return of(new ConcurrentHashMap<>(), function);
     }
+
+    V getIfPresent(final Object key);
 }
 
 final class LoadingMapImpl<K, V> implements LoadingMap<K, V> {
@@ -76,6 +78,11 @@ final class LoadingMapImpl<K, V> implements LoadingMap<K, V> {
             return value;
         }
         return this.map.computeIfAbsent((K) key, this.function);
+    }
+
+    @Override
+    public V getIfPresent(Object key) {
+        return this.map.get(key);
     }
 
     @Override

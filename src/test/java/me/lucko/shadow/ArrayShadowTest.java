@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ReturnShadowingTest {
+public class ArrayShadowTest {
 
     @Test
     public void testArrayReturnShadowing() {
@@ -40,11 +40,33 @@ public class ReturnShadowingTest {
         assertEquals(5, shadow.getItems()[1].getValue());
     }
 
+    @Test
+    public void testArrayParameterShadowing() {
+        DataClass data = new DataClass(new Item[]{new Item(2), new Item(5)});
+        DataClassShadow shadow = ShadowFactory.global().shadow(DataClassShadow.class, data);
+
+        ItemShadow[] items = {
+                ShadowFactory.global().constructShadow(ItemShadow.class, 7),
+                ShadowFactory.global().constructShadow(ItemShadow.class, 4),
+                ShadowFactory.global().constructShadow(ItemShadow.class, 6)
+        };
+
+        shadow.setItems(items);
+
+        assertEquals(7, data.items[0].i);
+        assertEquals(4, data.items[1].i);
+        assertEquals(6, data.items[2].i);
+    }
+
     @ClassTarget(DataClass.class)
     private interface DataClassShadow extends Shadow {
         @Field
-        @ReturnShadowingStrategy(ReturnShadowingStrategy.ShadowReturnArray.class)
+        @ShadowingStrategy(wrapper = ShadowingStrategy.ForShadowArrays.class)
         ItemShadow[] getItems();
+
+        @Field
+        @ShadowingStrategy(unwrapper = ShadowingStrategy.ForShadowArrays.class)
+        void setItems(ItemShadow[] items);
     }
 
     @ClassTarget(Item.class)
