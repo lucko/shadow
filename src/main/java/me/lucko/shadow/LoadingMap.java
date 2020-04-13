@@ -30,23 +30,19 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-interface LoadingMap<K, V> extends Map<K, V> {
+class LoadingMap<K, V> implements Map<K, V> {
     static <K, V> LoadingMap<K, V> of(final Map<K, V> map, final Function<K, V> function) {
-        return new LoadingMapImpl<>(map, function);
+        return new LoadingMap<>(map, function);
     }
 
     static <K, V> LoadingMap<K, V> of(final Function<K, V> function) {
         return of(new ConcurrentHashMap<>(), function);
     }
 
-    V getIfPresent(final Object key);
-}
-
-final class LoadingMapImpl<K, V> implements LoadingMap<K, V> {
     private final Map<K, V> map;
     private final Function<K, V> function;
 
-    LoadingMapImpl(final Map<K, V> map, final Function<K, V> function) {
+    LoadingMap(final Map<K, V> map, final Function<K, V> function) {
         this.map = map;
         this.function = function;
     }
@@ -80,7 +76,6 @@ final class LoadingMapImpl<K, V> implements LoadingMap<K, V> {
         return this.map.computeIfAbsent((K) key, this.function);
     }
 
-    @Override
     public V getIfPresent(Object key) {
         return this.map.get(key);
     }

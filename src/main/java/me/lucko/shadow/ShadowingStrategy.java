@@ -257,9 +257,6 @@ public @interface ShadowingStrategy {
                 return null;
             }
 
-            System.out.println(wrapped);
-            System.out.println(expectedType);
-
             Class<?> wrappedType = wrapped.getClass();
             if (!wrappedType.isArray()) {
                 throw new RuntimeException("Object to be unwrapped is not an array: " + wrappedType);

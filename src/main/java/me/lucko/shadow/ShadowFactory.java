@@ -30,7 +30,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -130,7 +129,7 @@ public class ShadowFactory {
         // register the shadow first
         ShadowDefinition shadowDefinition = this.shadows.get(shadowClass);
 
-        final Class<?>[] argumentTypes = Arrays.stream(args).map(Object::getClass).toArray(Class[]::new);
+        final Class<?>[] argumentTypes = ShadowInvocationHandler.getArgumentTypes(args, null);
         Class<?>[] unwrappedParameterTypes;
         Object[] unwrappedArguments;
         try {
@@ -139,7 +138,7 @@ public class ShadowFactory {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Class<?>[] unwrappedArgumentTypes = Arrays.stream(unwrappedArguments).map(Object::getClass).toArray(Class[]::new);
+        Class<?>[] unwrappedArgumentTypes = ShadowInvocationHandler.getArgumentTypes(unwrappedArguments, unwrappedParameterTypes);
 
         MethodHandle targetConstructor = shadowDefinition.findTargetConstructor(unwrappedArgumentTypes);
 

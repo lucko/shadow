@@ -46,7 +46,7 @@ final class ShadowDefinition {
     // caches
     private final @NonNull LoadingMap<MethodInfo, TargetMethod> methods = LoadingMap.of(this::loadTargetMethod);
     private final @NonNull LoadingMap<FieldInfo, TargetField> fields = LoadingMap.of(this::loadTargetField);
-    private final @NonNull LoadingMap<Class[], MethodHandle> constructors = LoadingMap.of(this::loadTargetConstructor);
+    private final @NonNull LoadingMap<Class<?>[], MethodHandle> constructors = LoadingMap.of(this::loadTargetConstructor);
 
     ShadowDefinition(@NonNull ShadowFactory shadowFactory, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
         this.shadowFactory = shadowFactory;

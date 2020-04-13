@@ -34,7 +34,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -106,12 +105,16 @@ final class ShadowInvocationHandler implements InvocationHandler {
                     .invokeWithArguments(args);
         }
 
+        if (args == null) {
+            args = new Object[0];
+        }
+
         Object returnValue;
 
         if (shadowMethod.isAnnotationPresent(Field.class)) {
             ShadowDefinition.TargetField targetField = this.shadow.findTargetField(shadowMethod);
 
-            if (args == null || args.length == 0) {
+            if (args.length == 0) {
                 // getter
                 returnValue = bindWithHandle(targetField.getterHandle(), shadowMethod).invoke();
 
@@ -137,7 +140,7 @@ final class ShadowInvocationHandler implements InvocationHandler {
             Unwrapper unwrapper = getUnwrapper(shadowMethod);
             Class<?>[] unwrappedParameterTypes = unwrapper.unwrapAll(shadowMethod.getParameterTypes(), this.shadowFactory);
             Object[] unwrappedArguments = unwrapper.unwrapAll(args, unwrappedParameterTypes, this.shadowFactory);
-            Class<?>[] unwrappedArgumentTypes = Arrays.stream(unwrappedArguments).map(Object::getClass).toArray(Class[]::new);
+            Class<?>[] unwrappedArgumentTypes = getArgumentTypes(unwrappedArguments, unwrappedParameterTypes);
 
             ShadowDefinition.TargetMethod targetMethod = this.shadow.findTargetMethod(shadowMethod, unwrappedArgumentTypes);
             returnValue = bindWithHandle(targetMethod.handle(), shadowMethod).invokeWithArguments(unwrappedArguments);
@@ -145,6 +148,19 @@ final class ShadowInvocationHandler implements InvocationHandler {
 
         Wrapper wrapper = getWrapper(shadowMethod);
         return wrapper.wrap(returnValue, shadowMethod.getReturnType(), this.shadowFactory);
+    }
+
+    static Class<?>[] getArgumentTypes(Object[] arguments, Class<?>[] fallback) {
+        Class<?>[] types = new Class[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            final Object arg = arguments[i];
+            if (arg == null) {
+                types[i] = fallback == null ? Object.class : fallback[i];
+            } else {
+                types[i] = arg.getClass();
+            }
+        }
+        return types;
     }
 
     private static Wrapper getWrapper(Method shadowMethod) {
