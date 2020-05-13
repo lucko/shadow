@@ -27,6 +27,7 @@ package me.lucko.shadow;
 
 import me.lucko.shadow.ShadowingStrategy.Unwrapper;
 import me.lucko.shadow.ShadowingStrategy.Wrapper;
+
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -122,7 +123,7 @@ final class ShadowInvocationHandler implements InvocationHandler {
                 // setter
                 MethodHandle setter = bindWithHandle(targetField.setterHandle(), shadowMethod);
                 Unwrapper unwrapper = getUnwrapper(shadowMethod);
-                Class<?> unwrappedType = unwrapper.unwrap(shadowMethod.getParameterTypes()[0], shadowFactory);
+                Class<?> unwrappedType = unwrapper.unwrap(shadowMethod.getParameterTypes()[0], this.shadowFactory);
                 Object value = unwrapper.unwrap(args[0], unwrappedType, this.shadowFactory);
                 setter.invokeWithArguments(value);
 

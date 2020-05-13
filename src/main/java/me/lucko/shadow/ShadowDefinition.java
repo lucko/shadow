@@ -46,7 +46,7 @@ final class ShadowDefinition {
     // caches
     private final @NonNull LoadingMap<MethodInfo, TargetMethod> methods = LoadingMap.of(this::loadTargetMethod);
     private final @NonNull LoadingMap<FieldInfo, TargetField> fields = LoadingMap.of(this::loadTargetField);
-    private final @NonNull LoadingMap<Class<?>[], MethodHandle> constructors = LoadingMap.of(this::loadTargetConstructor);
+    private final @NonNull LoadingMap<ConstructorInfo, MethodHandle> constructors = LoadingMap.of(this::loadTargetConstructor);
 
     ShadowDefinition(@NonNull ShadowFactory shadowFactory, @NonNull Class<? extends Shadow> shadowClass, @NonNull Class<?> targetClass) {
         this.shadowFactory = shadowFactory;
@@ -71,7 +71,7 @@ final class ShadowDefinition {
     }
 
     public @NonNull MethodHandle findTargetConstructor(@NonNull Class<?>[] argumentTypes) {
-        return this.constructors.get(argumentTypes);
+        return this.constructors.get(new ConstructorInfo(argumentTypes));
     }
 
     private @NonNull TargetMethod loadTargetMethod(@NonNull MethodInfo methodInfo) {
@@ -122,10 +122,10 @@ final class ShadowDefinition {
         }
     }
 
-    private @NonNull MethodHandle loadTargetConstructor(@NonNull Class<?>[] argumentTypes) {
-        Constructor<?> constructor = BeanUtils.getMatchingConstructor(this.targetClass, argumentTypes);
+    private @NonNull MethodHandle loadTargetConstructor(@NonNull ConstructorInfo constructorInfo) {
+        Constructor<?> constructor = BeanUtils.getMatchingConstructor(this.targetClass, constructorInfo.argumentTypes);
         if (constructor == null) {
-            throw new RuntimeException(new NoSuchMethodException(this.targetClass.getName() + ".<init>" + " - " + Arrays.toString(argumentTypes)));
+            throw new RuntimeException(new NoSuchMethodException(this.targetClass.getName() + ".<init>" + " - " + Arrays.toString(constructorInfo.argumentTypes)));
         }
 
         Reflection.ensureAccessible(constructor);
@@ -184,6 +184,28 @@ final class ShadowDefinition {
         @Override
         public int hashCode() {
             return this.shadowMethod.hashCode();
+        }
+    }
+
+    private static final class ConstructorInfo {
+        private final Class<?>[] argumentTypes;
+
+        ConstructorInfo(Class<?>[] argumentTypes) {
+            this.argumentTypes = argumentTypes;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            ConstructorInfo that = (ConstructorInfo) o;
+            return Arrays.equals(this.argumentTypes, that.argumentTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(this.argumentTypes);
         }
     }
 
