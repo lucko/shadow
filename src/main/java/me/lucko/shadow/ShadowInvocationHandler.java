@@ -121,11 +121,11 @@ final class ShadowInvocationHandler implements InvocationHandler {
 
             } else if (args.length == 1) {
                 // setter
-                MethodHandle setter = bindWithHandle(targetField.setterHandle(), shadowMethod);
                 Unwrapper unwrapper = getUnwrapper(shadowMethod);
                 Class<?> unwrappedType = unwrapper.unwrap(shadowMethod.getParameterTypes()[0], this.shadowFactory);
                 Object value = unwrapper.unwrap(args[0], unwrappedType, this.shadowFactory);
-                setter.invokeWithArguments(value);
+
+                bindWithHandle(targetField, value, shadowMethod);
 
                 if (shadowMethod.getReturnType() == void.class) {
                     returnValue = null;
@@ -194,6 +194,17 @@ final class ShadowInvocationHandler implements InvocationHandler {
                 throw new IllegalStateException("Cannot call non-static method from a static shadow instance.");
             }
             return methodHandle.bindTo(this.handle);
+        }
+    }
+
+    private void bindWithHandle(ShadowDefinition.TargetField field, Object value, AnnotatedElement annotatedElement) throws Throwable {
+        if (annotatedElement.isAnnotationPresent(Static.class)) {
+            field.underlyingField().set(null, value);
+        } else {
+            if (this.handle == null) {
+                throw new IllegalStateException("Cannot call non-static method from a static shadow instance.");
+            }
+            field.underlyingField().set(this.handle, value);
         }
     }
 

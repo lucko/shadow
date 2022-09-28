@@ -84,6 +84,36 @@ public class ShadowFactory {
     }
 
     /**
+     * Creates a shadow for the given class.
+     *
+     * @param shadowClass the class of the shadow definition
+     * @param <T> the shadow type
+     * @return the shadow instance
+     */
+    public final <T extends Shadow> T allocateShadow(Class<T> shadowClass) {
+        Objects.requireNonNull(shadowClass, "shadowClass");
+
+        // register the shadow first
+        ShadowDefinition shadowDefinition = this.shadows.get(shadowClass);
+        // ensure the target class of the shadow is assignable from the handle class
+        Class<?> targetClass = shadowDefinition.getTargetClass();
+
+        Object handle = null;
+        try {
+            handle = Reflection.allocateInstance(targetClass);
+        } catch (InstantiationException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (!targetClass.isAssignableFrom(handle.getClass())) {
+            throw new IllegalArgumentException("Target class " + targetClass.getName() + " is not assignable from handle class " + handle.getClass().getName());
+        }
+
+        // return a proxy instance
+        return createProxy(shadowClass, new ShadowInvocationHandler(this, shadowDefinition, handle));
+    }
+
+    /**
      * Creates a static shadow for the given class.
      *
      * @param shadowClass the class of the shadow definition
