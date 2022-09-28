@@ -212,13 +212,10 @@ final class ShadowDefinition {
     static final class TargetField {
         private final @NonNull Field field;
         private final @NonNull MethodHandle getter;
-        private final @NonNull MethodHandle setter;
-
         TargetField(@NonNull Field field) throws IllegalAccessException {
             this.field = field;
             MethodHandles.Lookup lookup = PrivateMethodHandles.forClass(field.getDeclaringClass());
             this.getter = lookup.unreflectGetter(field);
-            this.setter = lookup.unreflectSetter(field);
         }
 
         public @NonNull Field underlyingField() {
@@ -227,10 +224,6 @@ final class ShadowDefinition {
 
         public @NonNull MethodHandle getterHandle() {
             return this.getter;
-        }
-
-        public @NonNull MethodHandle setterHandle() {
-            return this.setter;
         }
     }
 
