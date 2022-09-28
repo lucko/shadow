@@ -26,6 +26,7 @@
 package me.lucko.shadow;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
+import sun.misc.Unsafe;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
@@ -35,6 +36,31 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 final class Reflection {
+
+    private static final Unsafe unsafe;
+
+    static {
+        try {
+            unsafe = fetch(null, Unsafe.class.getDeclaredField("theUnsafe"));
+        } catch (NoSuchFieldException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    public static <T> T allocateInstance(Class<T> type) throws InstantiationException {
+        //noinspection unchecked
+        return (T) unsafe.allocateInstance(type);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T fetch(Object object, Field field) {
+        try {
+            field.setAccessible(true);
+            return (T) field.get(object);
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
 
     public static void ensureStatic(Member member) {
         if (!Modifier.isStatic(member.getModifiers())) {
