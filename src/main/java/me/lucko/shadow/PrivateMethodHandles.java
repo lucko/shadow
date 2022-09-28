@@ -31,9 +31,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-/**
- * A utility for constructing private method handles.
- */
 final class PrivateMethodHandles {
 
     /**
@@ -44,7 +41,7 @@ final class PrivateMethodHandles {
      * @return a lookup object for the target class, with private access
      */
     public static MethodHandles.@NonNull Lookup forClass(@NonNull Class<?> targetClass) {
-        MethodHandles.lookup().in(targetClass);
+        return MethodHandles.lookup().in(targetClass);
     }
 
 }
